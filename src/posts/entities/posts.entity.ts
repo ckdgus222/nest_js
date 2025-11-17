@@ -1,12 +1,17 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { UserModal } from 'src/users/entities/users.entity';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class PostModal {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  author: string;
+  // 1) UsersModel과 연동한다 Foreing Key(외래키)를 이용해서.
+  // 2) null이 될 수 없다.
+  @ManyToOne(() => UserModal, (user) => user.posts, {
+    nullable: false,
+  })
+  author: UserModal;
 
   @Column()
   title: string;

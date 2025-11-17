@@ -4,6 +4,8 @@ import { AppService } from './app.service';
 import { PostsModule } from './posts/posts.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PostModal } from './posts/entities/posts.entity';
+import { UsersModule } from './users/users.module';
+import { UserModal } from './users/entities/users.entity';
 
 @Module({
   imports: [
@@ -16,9 +18,10 @@ import { PostModal } from './posts/entities/posts.entity';
       username: 'postgres',
       password: 'postgres',
       database: 'postgres',
-      entities: [PostModal],
+      entities: [PostModal, UserModal],
       synchronize: true,
     }),
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
