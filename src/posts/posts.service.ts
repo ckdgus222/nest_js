@@ -28,11 +28,14 @@ export class PostsService {
   ) {}
 
   async getAllPosts() {
-    return this.postsRepository.find();
+    return this.postsRepository.find({
+      relations: ['author'],
+    });
   }
 
   async getPostById(id: number) {
     const post = await this.postsRepository.findOne({
+      relations: ['author'],
       where: {
         id,
       },
@@ -43,12 +46,14 @@ export class PostsService {
     return post;
   }
 
-  async createPost(author: string, title: string, content: string) {
+  async createPost(authorId: number, title: string, content: string) {
     // 1) create -> 저장할 객체를 생성한다.
     // 2) save -> 객체를 저장한다. (create 메서드에서 생성한 객체로)
 
     const post = this.postsRepository.create({
-      author,
+      author: {
+        id: authorId,
+      },
       title,
       content,
       likeCount: 0,
@@ -80,7 +85,6 @@ export class PostsService {
       throw new NotFoundException();
     }
 
-    if (author) post.author = author;
     if (title) post.title = title;
     if (content) post.content = content;
 
