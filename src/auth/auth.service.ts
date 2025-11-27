@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserModal } from 'src/users/entities/users.entity';
-import { JWT_SECRET } from './const/auth.const';
+import { HASH_ROUNDS, JWT_SECRET } from './const/auth.const';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 
@@ -96,5 +96,23 @@ export class AuthService {
     }
 
     return existingUser;
+  }
+  async loginWithEmail(user: Pick<UserModal, 'email' | 'password'>) {
+    const existingUser = await this.authenticateWithEmailAndPassword(user);
+
+    return this.loginUser(existingUser);
+  }
+
+  async registerWithEmail(
+    user: Pick<UserModal, 'email' | 'nickname' | 'password'>,
+  ) {
+    // 비밀번호 해싱
+    // HASH_ROUNDS -> 몇번 해시 할건지.
+    // salt 는 자동 생성.
+    const hash = await bcrypt.hash(user.password, HASH_ROUNDS);
+
+    const newUser = await this.usersService.createUser(user);
+
+    return this.loginUser(newUser);
   }
 }
