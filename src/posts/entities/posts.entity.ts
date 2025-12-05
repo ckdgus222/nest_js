@@ -1,11 +1,9 @@
+import { BaseModel } from 'src/common/entity/base.entity';
 import { UserModal } from 'src/users/entities/users.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
 
 @Entity()
-export class PostModal {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class PostModal extends BaseModel {
   // 1) UsersModel과 연동한다 Foreing Key(외래키)를 이용해서.
   // 2) null이 될 수 없다.
   @ManyToOne(() => UserModal, (user) => user.posts, {

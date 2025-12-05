@@ -1,12 +1,10 @@
 import { PostModal } from 'src/posts/entities/posts.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { RolesEnum } from '../const/roles.const';
+import { BaseModel } from 'src/common/entity/base.entity';
 
 @Entity()
-export class UserModal {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class UserModal extends BaseModel {
   @Column({
     //  1)
     length: 20,
