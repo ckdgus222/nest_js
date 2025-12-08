@@ -42,7 +42,7 @@ export class BasicTokenGuard implements CanActivate {
 
     const { email, password } = this.authService.decodeBasicToken(token);
 
-    const user = this.authService.authenticateWithEmailAndPassword({
+    const user = await this.authService.authenticateWithEmailAndPassword({
       email,
       password,
     });

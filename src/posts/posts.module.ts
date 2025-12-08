@@ -12,29 +12,3 @@ import { PostModal } from './entities/posts.entity';
 export class PostsModule {}
 
 
-
-class CchService{
-  name: string,
-  age: number,
-
-
-  getAge(){
-    return this.name
-  }
-}
-
-class CchController{
-  cchService: CchService
-  constructor(cchService:CchService){
-    this.cchService = cchService
-  }
-
-  getAgeOver(){
-    return this.cchService.getAge()
-  }
-}
-
-const CchServiceOne = new CchService()
-const CchControllerOne = new CchController(CchServiceOne)
-
-CchControllerOne.getAgeOver()
