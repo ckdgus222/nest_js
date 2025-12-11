@@ -1,9 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserModal } from 'src/users/entities/users.entity';
+import { UserModel } from 'src/users/entities/users.entity';
 import { HASH_ROUNDS, JWT_SECRET } from './const/auth.const';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
+import { RegisterUserDto } from './dto/register-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -67,7 +68,6 @@ export class AuthService {
    */
   decodeBasicToken(base64String: string) {
     const decoded = Buffer.from(base64String, 'base64').toString('utf8');
-
     const split = decoded.split(':');
 
     if (split.length !== 2) {
@@ -86,9 +86,15 @@ export class AuthService {
   // 토큰 인증 검증 로직
   // JwtService 사용
   verifyToken(token: string): any {
-    return this.jwtService.verify(token, {
-      secret: JWT_SECRET, // 시그니쳐 시크릿 키
-    });
+    try {
+      return this.jwtService.verify(token, {
+        secret: JWT_SECRET, // 시그니쳐 시크릿 키
+      });
+    } catch (e) {
+      throw new UnauthorizedException(
+        `토큰이 만료됐거나 잘못된 토큰입니다. ${e}`,
+      );
+    }
   }
 
   rotateToken(token: string, isRefreshToken: boolean) {
@@ -147,7 +153,7 @@ export class AuthService {
    * 3) type : 'access' | 'refresh'
    */
   private signToken(
-    user: Pick<UserModal, 'email' | 'id'>,
+    user: Pick<UserModel, 'email' | 'id'>,
     isRefreshToken: boolean,
   ) {
     const payload = {
@@ -163,7 +169,7 @@ export class AuthService {
     });
   }
 
-  private loginUser(user: Pick<UserModal, 'email' | 'id'>) {
+  private loginUser(user: Pick<UserModel, 'email' | 'id'>) {
     return {
       accessToken: this.signToken(user, false),
       refreshToken: this.signToken(user, true),
@@ -171,7 +177,7 @@ export class AuthService {
   }
 
   async authenticateWithEmailAndPassword(
-    user: Pick<UserModal, 'email' | 'password'>,
+    user: Pick<UserModel, 'email' | 'password'>,
   ) {
     /**
      *  1. 사용자가 존재하는지 확인 (email)
@@ -200,15 +206,12 @@ export class AuthService {
     return existingUser;
   }
 
-  async loginWithEmail(user: Pick<UserModal, 'email' | 'password'>) {
+  async loginWithEmail(user: Pick<UserModel, 'email' | 'password'>) {
     const existingUser = await this.authenticateWithEmailAndPassword(user);
-
     return this.loginUser(existingUser);
   }
 
-  async registerWithEmail(
-    user: Pick<UserModal, 'email' | 'nickname' | 'password'>,
-  ) {
+  async registerWithEmail(user: RegisterUserDto) {
     // 비밀번호 해싱
     // HASH_ROUNDS -> 몇번 해시 할건지.
     // salt 는 자동 생성.

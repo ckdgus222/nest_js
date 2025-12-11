@@ -3,9 +3,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PostsModule } from './posts/posts.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PostModal } from './posts/entities/posts.entity';
+import { PostModel } from './posts/entities/posts.entity';
 import { UsersModule } from './users/users.module';
-import { UserModal } from './users/entities/users.entity';
+import { UserModel } from './users/entities/users.entity';
 import { AuthModule } from './auth/auth.module';
 import { CommonModule } from './common/common.module';
 
@@ -20,7 +20,7 @@ import { CommonModule } from './common/common.module';
       username: 'postgres',
       password: 'postgres',
       database: 'postgres',
-      entities: [PostModal, UserModal],
+      entities: [PostModel, UserModel],
       synchronize: true,
     }),
     UsersModule,
