@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { User } from 'src/users/decorator/user.decorator';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { PaginatePostsDto } from './dto/paginte-post.dot';
 
 // 1차 path 주소 /post
 // controller 클래스에 있는 "모든" 라우터 앞에 붙는 접두어.
@@ -24,8 +26,8 @@ export class PostsController {
   // 1) GET /posts
   // 모든 post를 다 가져온다
   @Get()
-  getPosts() {
-    return this.postsService.getAllPosts();
+  getPosts(@Query() query: PaginatePostsDto) {
+    return this.postsService.paginatePosts(query);
   }
 
   // 2) GET /posts/:id

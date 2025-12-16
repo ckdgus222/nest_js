@@ -7,7 +7,11 @@ async function bootstrap() {
 
   // Nestjs 프로젝트 전체 글로벌 파이프 설정. -> useGlobalPipes
   // 전체 class validator를 실행 시켜주는 파이프 -> ValidationPipe
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+    }),
+  );
 
   await app.listen(process.env.PORT ?? 3001);
 }
