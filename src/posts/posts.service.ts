@@ -4,7 +4,8 @@ import { MoreThan, Repository } from 'typeorm';
 import { PostModel } from './entities/posts.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { PaginatePostsDto } from './dto/paginte-post.dot';
+import { Order, PaginatePostsDto } from './dto/paginte-post.dto';
+import { HOST, PROTOCOL } from 'src/common/const/env.const';
 
 /**
  * author : string;
@@ -36,8 +37,18 @@ export class PostsService {
     });
   }
 
+  async generatePosts(userId: number) {
+    for (let i = 0; i < 100; i++) {
+      await this.createPost(userId, {
+        title: `임의로 생성된 포스트 제목 ${i}`,
+        content: `임의로 생성된 포스트 내용 ${i}`,
+      });
+    }
+  }
+
   // 1) 오름차 순으로 정렬하는 pagination만 구현한다
   async paginatePosts(dto: PaginatePostsDto) {
+    console.log(dto);
     const posts = await this.postsRepository.find({
       where: {
         // 더 크다 / 더많다
@@ -48,6 +59,43 @@ export class PostsService {
       },
       take: dto.take,
     });
+
+    // 해당되는 포스트가 0개 이상이면
+    // 마지막 포스트를 가져오고
+    // 아니면 null을 반환한다.
+    const lastItem =
+      posts.length > 0 && posts.length === dto.take
+        ? posts[posts.length - 1]
+        : null;
+
+    const nextUrl = lastItem && new URL(`${PROTOCOL}://${HOST}/posts`);
+
+    if (nextUrl) {
+      /**
+       * dto의 키값들을 루핑하면서
+       * 키값에 해당되는 벨류가 존재하면
+       * param에 그대로 붙여넣는다.
+       *
+       * 단, where__id_more_than 값만 lastItem의 마지막 값으로 넣어준다.
+       */
+      for (const key of Object.keys(dto)) {
+        if (dto[key]) {
+          if (key !== 'where__id_more_than' && key !== 'where__id_less_than') {
+            nextUrl.searchParams.append(key, dto[key]);
+          }
+        }
+      }
+
+      let key: 'where__id_more_than' | 'where__id_less_than';
+
+      if (dto.order__createdAt === Order.ASC) {
+        key = 'where__id_more_than';
+      } else {
+        key = 'where__id_less_than';
+      }
+
+      nextUrl.searchParams.append(key, lastItem.id.toString());
+    }
 
     /**
      * Response
@@ -61,6 +109,11 @@ export class PostsService {
      */
     return {
       data: posts,
+      cursor: {
+        after: lastItem?.id ?? null,
+      },
+      count: posts.length,
+      next: nextUrl?.toString() ?? null,
     };
   }
 

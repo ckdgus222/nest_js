@@ -16,7 +16,8 @@ import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { User } from 'src/users/decorator/user.decorator';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { PaginatePostsDto } from './dto/paginte-post.dot';
+import { PaginatePostsDto } from './dto/paginte-post.dto';
+import { UserModel } from 'src/users/entities/users.entity';
 
 // 1차 path 주소 /post
 // controller 클래스에 있는 "모든" 라우터 앞에 붙는 접두어.
@@ -28,6 +29,14 @@ export class PostsController {
   @Get()
   getPosts(@Query() query: PaginatePostsDto) {
     return this.postsService.paginatePosts(query);
+  }
+
+  @Post('random')
+  @UseGuards(AccessTokenGuard)
+  async postPostsRandom(@User() user: UserModel) {
+    await this.postsService.generatePosts(user.id);
+
+    return true;
   }
 
   // 2) GET /posts/:id

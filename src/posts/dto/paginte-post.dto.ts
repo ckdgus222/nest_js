@@ -7,6 +7,15 @@ export enum Order {
 }
 
 export class PaginatePostsDto {
+  @IsNumber(
+    {},
+    {
+      message: numberValidationMessage,
+    },
+  )
+  @IsOptional()
+  where__id_less_than?: number;
+
   // 이전 마지막 데이터의 ID
   // 이 프로퍼티에 입력된 ID 보다 높은 ID 부터 값을 가져오기
   @IsNumber(
@@ -21,7 +30,7 @@ export class PaginatePostsDto {
   // 정렬
   // createdAt -> 생성된 시간의 내림차/오름차 순으로 정렬
   // 옵션 validator 검증 체크.
-  @IsIn(['ASC'])
+  @IsIn(['ASC', 'DESC'])
   @IsOptional()
   order__createdAt: Order = Order.ASC;
 
