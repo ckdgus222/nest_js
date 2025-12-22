@@ -24,3 +24,7 @@ export const User = createParamDecorator(
     return user;
   },
 );
+// 데코레이터를 사용안하면
+// req.user.id
+// 데코레이터로 user 데이터를 먼저 정리하고
+// user.id 바로 << 사용 가능 요청 객체에서 user 객체를 바로 뽑아서.

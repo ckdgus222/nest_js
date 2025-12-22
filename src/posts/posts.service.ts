@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { FindOptionsWhere, LessThan, MoreThan, Repository } from 'typeorm';
 import { PostModel } from './entities/posts.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -48,12 +48,48 @@ export class PostsService {
 
   // 1) 오름차 순으로 정렬하는 pagination만 구현한다
   async paginatePosts(dto: PaginatePostsDto) {
-    console.log(dto);
-    const posts = await this.postsRepository.find({
-      where: {
-        // 더 크다 / 더많다
-        id: MoreThan(dto.where__id_more_than ?? 0),
+    if (dto.page) {
+      return this.pagePaginatePosts(dto);
+    } else {
+      return this.cursorPaginatePosts(dto);
+    }
+  }
+
+  async pagePaginatePosts(dto: PaginatePostsDto) {
+    // 응답 값
+    /**
+     * data: Data[],
+     * total: number,
+     *
+     */
+
+    // findAndCount 응답값은
+    // [찾은데이터리스트, 카운트]
+    const [posts, count] = await this.postsRepository.findAndCount({
+      skip: dto.take * ((dto.page ?? 1) - 1),
+      take: dto.take,
+      order: {
+        createdAt: dto.order__createdAt,
       },
+    });
+
+    return {
+      data: posts,
+      total: count,
+    };
+  }
+
+  async cursorPaginatePosts(dto: PaginatePostsDto) {
+    const where: FindOptionsWhere<PostModel> = {};
+
+    if (dto.where__id_less_than) {
+      where.id = LessThan(dto.where__id_less_than);
+    } else if (dto.where__id_more_than) {
+      where.id = MoreThan(dto.where__id_more_than);
+    }
+
+    const posts = await this.postsRepository.find({
+      where,
       order: {
         createdAt: dto.order__createdAt,
       },
@@ -86,7 +122,7 @@ export class PostsService {
         }
       }
 
-      let key: 'where__id_more_than' | 'where__id_less_than';
+      let key: string | null = null;
 
       if (dto.order__createdAt === Order.ASC) {
         key = 'where__id_more_than';

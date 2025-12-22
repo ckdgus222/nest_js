@@ -7,6 +7,10 @@ export enum Order {
 }
 
 export class PaginatePostsDto {
+  @IsNumber()
+  @IsOptional()
+  page?: number;
+
   @IsNumber(
     {},
     {
