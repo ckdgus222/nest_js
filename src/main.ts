@@ -13,6 +13,12 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
+      // 데코레이터가 적용 되있지 않은 dto 프로퍼티들을
+      // 삭제 해줌.
+      // 허가한 쿼리들만 적용.
+      whitelist: true,
+      // 삭제된 쿼리를 던지면 -> 에러 발생.
+      forbidNonWhitelisted: true,
     }),
   );
 

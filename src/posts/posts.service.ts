@@ -4,8 +4,10 @@ import { FindOptionsWhere, LessThan, MoreThan, Repository } from 'typeorm';
 import { PostModel } from './entities/posts.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { Order, PaginatePostsDto } from './dto/paginte-post.dto';
+import { PaginatePostsDto } from './dto/paginte-post.dto';
 import { HOST, PROTOCOL } from 'src/common/const/env.const';
+import { Order } from 'src/common/dto/base-pagination.dto';
+import { CommonService } from 'src/common/common.service';
 
 /**
  * author : string;
@@ -29,6 +31,7 @@ export class PostsService {
   constructor(
     @InjectRepository(PostModel)
     private readonly postsRepository: Repository<PostModel>,
+    private readonly commonService: CommonService,
   ) {}
 
   async getAllPosts() {
@@ -48,11 +51,19 @@ export class PostsService {
 
   // 1) 오름차 순으로 정렬하는 pagination만 구현한다
   async paginatePosts(dto: PaginatePostsDto) {
-    if (dto.page) {
-      return this.pagePaginatePosts(dto);
-    } else {
-      return this.cursorPaginatePosts(dto);
-    }
+    return this.commonService.paginate(
+      dto,
+      this.postsRepository,
+      {
+        relations: ['author'],
+      },
+      'posts',
+    );
+    // if (dto.page) {
+    //   return this.pagePaginatePosts(dto);
+    // } else {
+    //   return this.cursorPaginatePosts(dto);
+    // }
   }
 
   async pagePaginatePosts(dto: PaginatePostsDto) {
@@ -82,10 +93,10 @@ export class PostsService {
   async cursorPaginatePosts(dto: PaginatePostsDto) {
     const where: FindOptionsWhere<PostModel> = {};
 
-    if (dto.where__id_less_than) {
-      where.id = LessThan(dto.where__id_less_than);
-    } else if (dto.where__id_more_than) {
-      where.id = MoreThan(dto.where__id_more_than);
+    if (dto.where__id__less_than) {
+      where.id = LessThan(dto.where__id__less_than);
+    } else if (dto.where__id__more_than) {
+      where.id = MoreThan(dto.where__id__more_than);
     }
 
     const posts = await this.postsRepository.find({
@@ -116,7 +127,10 @@ export class PostsService {
        */
       for (const key of Object.keys(dto)) {
         if (dto[key]) {
-          if (key !== 'where__id_more_than' && key !== 'where__id_less_than') {
+          if (
+            key !== 'where__id__more_than' &&
+            key !== 'where__id__less_than'
+          ) {
             nextUrl.searchParams.append(key, dto[key]);
           }
         }
@@ -125,9 +139,9 @@ export class PostsService {
       let key: string | null = null;
 
       if (dto.order__createdAt === Order.ASC) {
-        key = 'where__id_more_than';
+        key = 'where__id__more_than';
       } else {
-        key = 'where__id_less_than';
+        key = 'where__id__less_than';
       }
 
       nextUrl.searchParams.append(key, lastItem.id.toString());
