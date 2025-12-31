@@ -1,13 +1,28 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, LessThan, MoreThan, Repository } from 'typeorm';
 import { PostModel } from './entities/posts.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginatePostsDto } from './dto/paginte-post.dto';
-import { HOST, PROTOCOL } from 'src/common/const/env.const';
 import { Order } from 'src/common/dto/base-pagination.dto';
 import { CommonService } from 'src/common/common.service';
+import {
+  ENV_HOST_KEY,
+  ENV_PROTOCOL_KEY,
+} from 'src/common/const/env-keys.const';
+import { ConfigService } from '@nestjs/config';
+import { basename, join } from 'path';
+import {
+  POST_IMAGE_PATH,
+  PUBLIC_FOLDER_PATH,
+  TEMP_FOLDER_PATH,
+} from 'src/common/const/path.const';
+import { promises } from 'fs';
 
 /**
  * author : string;
@@ -32,6 +47,7 @@ export class PostsService {
     @InjectRepository(PostModel)
     private readonly postsRepository: Repository<PostModel>,
     private readonly commonService: CommonService,
+    private readonly configService: ConfigService,
   ) {}
 
   async getAllPosts() {
@@ -115,7 +131,10 @@ export class PostsService {
         ? posts[posts.length - 1]
         : null;
 
-    const nextUrl = lastItem && new URL(`${PROTOCOL}://${HOST}/posts`);
+    const protocol = this.configService.get<string>(ENV_PROTOCOL_KEY);
+    const host = this.configService.get<string>(ENV_HOST_KEY);
+
+    const nextUrl = lastItem && new URL(`${protocol}://${host}/posts`);
 
     if (nextUrl) {
       /**
@@ -178,6 +197,38 @@ export class PostsService {
       throw new NotFoundException();
     }
     return post;
+  }
+
+  async createPostImage(dto: CreatePostDto) {
+    if (!dto.image) {
+      throw new BadRequestException('이미지 파일 이름은 필수.');
+    }
+
+    // dto의 이미지 이름을 기반으로
+    // 파일의 경로를 생성한다.
+
+    const tempFilePath = join(TEMP_FOLDER_PATH, dto.image);
+
+    try {
+      // access -> 경로의 해당되는 파일이 접근이 가능한 상태인지 파악.
+      // 파일이 존재하는지 확인
+      // 만약에 존재하지 않는다면 에러를 던짐
+      await promises.access(tempFilePath);
+    } catch (e) {
+      throw new BadRequestException('존재하지 않는 파일 입니다.');
+    }
+
+    // 파일의 이름만 가져오기
+    // 예시 -> /Users/aaa/bbb/asdf.jpg -> asdf.jpg
+    const fileName = basename(tempFilePath);
+
+    // 새로 이동할 포스트 폴더의 경로 + 이미지 이름
+    // {프로젝트 경로}/public/posts/asdf.jpg
+    const newPath = join(POST_IMAGE_PATH, fileName);
+
+    await promises.rename(tempFilePath, newPath);
+
+    return true;
   }
 
   async createPost(authorId: number, postDto: CreatePostDto) {

@@ -9,7 +9,9 @@ import {
   Post,
   Query,
   Request,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
@@ -18,6 +20,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginatePostsDto } from './dto/paginte-post.dto';
 import { UserModel } from 'src/users/entities/users.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 // 1차 path 주소 /post
 // controller 클래스에 있는 "모든" 라우터 앞에 붙는 접두어.
@@ -51,12 +54,14 @@ export class PostsController {
   //    POST를 생성한다.
   @Post()
   @UseGuards(AccessTokenGuard)
-  postPosts(
+  async postPosts(
     @User('id') userId: number,
     @Body() body: CreatePostDto,
     // @Body('title') title: string,
     // @Body('content') content: string,
   ) {
+    await this.postsService.createPostImage(body);
+
     return this.postsService.createPost(userId, body);
   }
 

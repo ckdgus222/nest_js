@@ -1,16 +1,21 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserModel } from 'src/users/entities/users.entity';
-import { HASH_ROUNDS, JWT_SECRET } from './const/auth.const';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { RegisterUserDto } from './dto/register-user.dto';
+import { ConfigService } from '@nestjs/config';
+import {
+  ENV_HASH_ROUNDS_KEY,
+  ENV_JWT_SECRET_KEY,
+} from 'src/common/const/env-keys.const';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -88,7 +93,7 @@ export class AuthService {
   verifyToken(token: string): any {
     try {
       return this.jwtService.verify(token, {
-        secret: JWT_SECRET, // 시그니쳐 시크릿 키
+        secret: this.configService.get<string>(ENV_JWT_SECRET_KEY), // 시그니쳐 시크릿 키
       });
     } catch (e) {
       throw new UnauthorizedException(
@@ -99,7 +104,7 @@ export class AuthService {
 
   rotateToken(token: string, isRefreshToken: boolean) {
     const decoded = this.jwtService.verify(token, {
-      secret: JWT_SECRET,
+      secret: this.configService.get<string>(ENV_JWT_SECRET_KEY),
     });
 
     /**
@@ -163,7 +168,7 @@ export class AuthService {
     };
 
     return this.jwtService.sign(payload, {
-      secret: JWT_SECRET,
+      secret: this.configService.get<string>(ENV_JWT_SECRET_KEY),
       // seconds
       expiresIn: isRefreshToken ? 3600 : 300,
     });
@@ -215,7 +220,10 @@ export class AuthService {
     // 비밀번호 해싱
     // HASH_ROUNDS -> 몇번 해시 할건지.
     // salt 는 자동 생성.
-    const hash = await bcrypt.hash(user.password, HASH_ROUNDS);
+    const hash = await bcrypt.hash(
+      user.password,
+      parseInt(this.configService.get<string>(ENV_HASH_ROUNDS_KEY)!, 10),
+    );
 
     const newUser = await this.usersService.createUser({
       ...user,
